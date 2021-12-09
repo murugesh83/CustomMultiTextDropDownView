@@ -1,6 +1,7 @@
 package com.paak.dropdownwithedittextview;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -14,24 +15,49 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.MultiAutoCompleteTextView;
+import android.widget.Spinner;
+
+import viewmodel.MyDataViewModel;
 
 public class MainActivity extends AppCompatActivity {
 
-    String[] languages = { "C","C++","Java","C#","PHP","JavaScript","jQuery","AJAX","JSON" };
+    MultiAutoCompleteTextView acTextView;
+    MyDataViewModel viewModel;
+    Spinner spinner;
+    ArrayAdapter<String> countyAdapter = null;
 
-    String previousText ="";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        acTextView = (MultiAutoCompleteTextView) findViewById(R.id.languages);
+        spinner = (Spinner) findViewById(R.id.planets_spinner);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.select_dialog_singlechoice, languages);
-        //Find TextView control
-        MultiAutoCompleteTextView acTextView = (MultiAutoCompleteTextView) findViewById(R.id.languages);
-        adapter.setNotifyOnChange(true);
-        acTextView.setAdapter(adapter);
-        acTextView.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
-        //acTextView.showDropDown();
+         viewModel = new ViewModelProvider(this).get(MyDataViewModel.class);
+          viewModel.getShoppingList().observe(this, shoppingList -> {
+              ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, shoppingList);
+            //Find TextView control
+            adapter.setNotifyOnChange(true);
+            acTextView.setAdapter(adapter);
+            acTextView.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
+        });
+
+
+       viewModel.getCounty_id().observe(this, s -> {
+           Log.d("MainActivity", "muru "+s);
+           int spinnerPosition = countyAdapter.getPosition(s);
+           spinner.setSelection(spinnerPosition);
+           countyAdapter.setNotifyOnChange(true);
+
+       });
+
+       //viewModel = new ViewModelProvider(this).get(MyDataViewModel.class);
+       viewModel.getShoppingList().observe(this, shoppingList -> {
+           countyAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, shoppingList);
+            spinner.setAdapter(countyAdapter);
+           countyAdapter.setNotifyOnChange(true);
+        });
+
         acTextView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -41,20 +67,6 @@ public class MainActivity extends AppCompatActivity {
                 acTextView.showDropDown();
                 acTextView.requestFocus();
                 return true;
-            }
-        });
-        acTextView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                Log.d("MainActivity", "muru focused");
-                //acTextView = (MultiAutoCompleteTextView) v;
-            }
-        });
-
-        acTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.d("MainActivity", "muru onItemClicked");
             }
         });
     }
